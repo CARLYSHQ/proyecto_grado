@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Resultado del Análisis</title>
+    <!-- Agregar Tailwind CSS desde el CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Agregar Chart.js desde el CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Agregar markdown-it desde el CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+    <style>
+        /* Estilos para la tabla */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #ffffff;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ffffff;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex gap-4 justify-center items-center ">
+    <div class="w-full  px-4 py-8 bg-white shadow-lg rounded-lg">
+        <h1 class="text-3xl font-bold mb-4">Detalle del Resultado del Análisis</h1>
+        <h2 class="text-2xl font-semibold mb-4">{{ resultado_analisis.id_resultado }}</h2>
+
+        <div style="display: flex;gap: 5px;justify-content: center;padding: 30px;">
+            <div style="display: flex;flex-direction: column;gap: 5px;width: 50%;">
+                <div id="markdown-rendered" class="p-4 bg-gray-200 rounded-lg w-[30vh]">
+                    <!-- Aquí se mostrará el contenido Markdown renderizado -->
+                </div>
+                <canvas id="topInsumosChart" height="300"></canvas>
+            </div>
+    
+            <!-- Script para renderizar el contenido Markdown -->
+            <script>
+                // Obtener el contenido Markdown
+                var markdownContent = "{{ markdown_content|escapejs }}"; // Escapar el contenido JavaScript
+                // Renderizar el contenido Markdown utilizando markdown-it
+                var md = window.markdownit();
+                document.getElementById('markdown-rendered').innerHTML = md.render(markdownContent);
+            </script>
+    
+         
+            <div  style="display: flex;flex-direction: column;gap: 5px;width: 50%;">
+                <canvas id="myChart" height="300"></canvas>
+                <canvas id="topClientesChart" height="300" ></canvas>
+            </div>
+        
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Obtener los datos del top de insumos del contexto
+  var topInsumosData = JSON.parse('{{ top_insumos_json|escapejs }}');
+
+  // Extraer nombres de insumos y número de usos
+  var insumos = topInsumosData.map(function(insumo) {
+    return insumo.insumos__nombre;
+  });
+  var usos = topInsumosData.map(function(insumo) {
+    return insumo.total_usos;
+  });
+
+  // Configurar el gráfico
+  var ctx = document.getElementById('topInsumosChart').getContext('2d');
+  var topInsumosChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: insumos,
+      datasets: [{
+        label: 'Top de Insumos mas adquiridos',
+        data: usos,
+        backgroundColor: 'skyblue',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  });
+</script>
+      
+        
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // Obtener los datos del top de clientes del contexto
+            var topClientesData = JSON.parse('{{ top_clientes_json|escapejs }}');
+
+        
+            // Extraer nombres de clientes y montos de ventas
+            var clientes = topClientesData.map(function(cliente) {
+                return cliente.cliente__nombre + ' ' + cliente.cliente__apellidos;
+            });
+            var ventas = topClientesData.map(function(cliente) {
+                return cliente.total_ventas;
+            });
+        
+            // Configurar el gráfico
+            var ctx = document.getElementById('topClientesChart').getContext('2d');
+            var topClientesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: clientes,
+                    datasets: [{
+                        label: 'Top de clientes mas frecuentes',
+                        data: ventas,
+                        backgroundColor: 'skyblue',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        </script>
+        
+        
+        <!-- Script para procesar los datos y generar la gráfica -->
+        <script>
+            // Obtener los datos de la tabla
+            var table = document.querySelector('table');
+            var rows = table.querySelectorAll('tr');
+            
+            // Arreglos para almacenar los datos
+            var categories = [];
+            var salesPercentages = [];
+            var customerPercentages = [];
+
+            // Iterar sobre las filas de la tabla
+            rows.forEach(function(row, index) {
+                // Ignorar la primera fila (encabezados de la tabla)
+                if (index !== 0) {
+                    var cells = row.querySelectorAll('td');
+                    categories.push(cells[0].innerText.trim());
+                    salesPercentages.push(parseFloat(cells[1].innerText.trim()));
+                    customerPercentages.push(parseFloat(cells[2].innerText.trim()));
+                }
+            });
+
+            // Crear la gráfica utilizando Chart.js
+            var ctx = document.getElementById('myChart').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        label: 'Porcentaje de participación en las ventas totales',
+                        data: salesPercentages,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Porcentaje de clientes por categoría de valor',
+                        data: customerPercentages,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>
